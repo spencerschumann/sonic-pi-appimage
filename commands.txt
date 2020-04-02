@@ -1,0 +1,9 @@
+
+# Start with an existing dockerized Qt build image
+docker pull darkmattercoder/qt-build:5.14.1
+
+# Build the example app
+docker run --rm -it -v /home/spencer/code/sonic-pi-appimage:/var/build darkmattercoder/qt-build:5.14.1 build
+
+# Run the example app
+docker run --rm -it --network=host -eDISPLAY=:1 --volume :/root/.Xauthority -v /home/spencer/code/sonic-pi-appimage:/var/build darkmattercoder/qt-build:5.14.1 /var/build/build/sonic-pi-appimage
