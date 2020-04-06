@@ -7,3 +7,68 @@ docker run --rm -it -v /home/spencer/code/sonic-pi-appimage:/var/build darkmatte
 
 # Run the example app
 docker run --rm -it --network=host -eDISPLAY=:1 --volume :/root/.Xauthority -v /home/spencer/code/sonic-pi-appimage:/var/build darkmattercoder/qt-build:5.14.1 /var/build/build/sonic-pi-appimage
+
+# To install ruby inside the container
+docker run -u root --rm -it -eDISPLAY=$DISPLAY -v $(pwd):/var/build darkmattercoder/qt-build:5.14.1 bash
+   # then, inside container:
+   apt-get update
+   apt-get install ruby
+
+
+# Install exodus
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py
+pip install exodus-bundler
+apt-get install musl-tools
+
+
+# Use exodus
+exodus -a /usr/local/plugins/platforms/libqxcb.so -t build/sonic-pi-appimage -o app_exodus.tar
+
+Then extract the tar file and run the exodus/bin/XXX executable. Note that this all will need some massaging to move it to the AppImage directory.
+
+
+
+# Building Sonic Pi
+apt-get install ruby2.5-dev libaudio-dev
+
+
+TODO:
+* Bundle Qt Hello World into an appimage, inside the container, and test running it outside the container
+* Build supercollider inside the container
+  * Will need to install all its dependencies
+  * Start with using Jack, but want to look at using ALSA instead - and maybe even portaudio/pulseaudio initially for simplicity
+* Build SP's Ruby dependencies inside the container
+* Skip the Erlang piece for now - but probably want to replace Erlang with a small Qt-based implementation to reduce dependencies
+* I'm not sure how appimage handles forking - but will need to fork the supercollider process, and any others
+* Will want to create a Dockerfile with all the dependencies ready to go, then allow just sonic pi (and supercollider maybe)
+  to be built with it - in other words, create a dockerized build image for sonic pi that only needs the sonic pi source code
+  and from that it generates a standalone appimage
+* Could also do a docker based package that uses Qt's web backend to serve the app to a browser, along with audio
+  also being streamed through the browser.
+
+
+
+
+
+
+
+
+
+# With root:
+apt-get update
+pip install exodus-bundler
+apt-get install musl-tools
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py
+pip install exodus-bundler
+apt-get install strace
+apt install ruby2.5-dev
+apt-get install libaudio-dev libosmid-dev
+apt-get install libfftw3-dev 
+apt-get install libjack-jackd2-dev libsndfile1-dev libasound2-dev libavahi-client-dev libreadline6-dev libfftw3-dev libxt-dev libudev-dev cmake libboost-dev libffi-dev erlang-base
+
+           >> Probably not needed: qt5-qmake libqt5scintilla2-dev libboost-dev
+
+
+
