@@ -10,6 +10,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
     musl-tools \
     ruby2.5-dev \
+    ruby-ffi \
     libaudio-dev \
     libjack-jackd2-dev \
     libsndfile1-dev \
@@ -39,8 +40,7 @@ apt-get install -y --no-install-recommends \
     git submodule update --init --recursive
     mkdir build
     cd build
-    # Note: I want to disable the unnecessary supernova, but this failed: -DNOVA_SIMD=OFF 
-    cmake -DCMAKE_BUILD_TYPE=Release -DSC_QT=OFF -DSUPERNOVA=off -DSC_EL=OFF ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DSC_QT=OFF -DSUPERNOVA=OFF -DSC_EL=OFF ..
     make -j4
     make install
     ldconfig
@@ -56,7 +56,7 @@ apt-get install -y --no-install-recommends \
     cd sc3-plugins/
     mkdir build
     cd build
-    cmake -DSC_PATH=../../supercollider ..
+    cmake -DSUPERNOVA=OFF -DSC_PATH=../../supercollider ..
     cmake --build  . --config Release
     cmake --build  . --config Release --target install
 )
@@ -74,10 +74,6 @@ chown qt /home/root/.sonic-pi
     cd sonic-pi/app/server/ruby/
     rake
 )
-
-# Sonic Pi expects a Ruby here, otherwise it falls back to the system one.
-mkdir -p sonic-pi/app/server/native/ruby/bin
-cp /usr/bin/ruby sonic-pi/app/server/native/ruby/bin
 
 (
     cd sonic-pi/app/gui/qt
@@ -112,20 +108,26 @@ exodus -t \
     -a sonic-pi/etc \
     -a sonic-pi/app/gui/qt/theme \
     /usr/local/bin/scsynth \
-    sonic-pi/app/server/native/ruby/bin/ruby \
-    sonic-pi/app/gui/qt/build/sonic-pi
+    /usr/bin/ruby \
+    sonic-pi/app/gui/qt/build/sonic-pi \
+    -o exodus-sonic-pi.tgz
 
-# TODO: extract the tarball and patch things up
+# extract the tarball and patch things up
+tar -xzf exodus-sonic-pi.tgz
+(
+    cd exodus/bundles
+    ln -s * bundle
+)
 
 # Note: need to remove symlinks in the app/server/ruby directory for .rb files, otherwise
 # the require_relative breaks.
 # Here's maybe the easiest way to accomplish this task:
-find exodus/bundles/*/usr/lib/ruby/ -name '*.rb' -exec sed -i '' '{}' \;
-find exodus/bundles/*/var/build/sonic-pi/app/server/ruby -name '*.rb' -exec sed -i '' '{}' \;
+find exodus/bundles/bundle/usr/lib/ruby/ -name '*.rb' -exec sed -i '' '{}' \;
+find exodus/bundles/bundle/var/build/sonic-pi/app/server/ruby -name '*.rb' -exec sed -i '' '{}' \;
 
 
 # To Run:
-# PATH=/home/spencer/code/sonic-pi-appimage/exodus/bin:$PATH RUBYLIB=/home/spencer/code/sonic-pi-appimage/exodus/bundles/ef76c6496cb321d03e6596af8119f4e0af37cb7acb8c5fc711cb51e05312fdac/usr/lib/ruby/2.5.0/ ./sonic-pi
+# PATH=/home/spencer/code/sonic-pi-appimage/exodus/bin:$PATH RUBYLIB=/home/spencer/code/sonic-pi-appimage/exodus/bundles/bundle/usr/lib/ruby/2.5.0/ ./sonic-pi
 
 
 # Note that it might be easier to just do a custom Ruby installation, although then again I'd
