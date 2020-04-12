@@ -88,49 +88,80 @@ chown qt /home/root/.sonic-pi
 # Packaging
 
 # Remove broken symlinks in the ruby installation that trip up exodus.
-find -L /usr/lib/ruby/ -type l -delete
+#find -L /usr/lib/ruby/ -type l -delete
 
 # Install Exodus via PIP (Note, maybe can skip pip and install exodus directly instead)
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3 get-pip.py
-pip install exodus-bundler
+pip3 install exodus-bundler
+
+libraries=$(cat \
+    <(find sonic-pi/app/server/ruby) \
+    <(echo /usr/local/plugins/platforms/libqxcb.so) \
+    <(echo /usr/local/plugins/xcbglintegrations/libqxcb-glx-integration.so) \
+    <(find /usr/lib/ruby) \
+    <(find /usr/lib/x86_64-linux-gnu/ruby) \
+    <(find /usr/local/share/SuperCollider) \
+    <(find sonic-pi/etc) \
+    <(find sonic-pi/app/gui/qt/theme) | \
+    grep '\.so$' \
+)
 
 # Run exodus
-find sonic-pi/app/server/ruby/ -type f | \
-    grep -v '/test/' | grep -v '/tests/' | \
-    grep -v '\.o$' | grep -v '\.c$' | grep -v '\.h$' |
+echo "Running Exodus..."
+echo "$libraries" |
 exodus -t \
-    -a /usr/local/plugins/platforms/libqxcb.so \
-    -a /usr/local/plugins/xcbglintegrations/libqxcb-glx-integration.so \
-    -a /usr/lib/ruby \
-    -a /usr/lib/x86_64-linux-gnu/ruby \
-    -a /usr/local/share/SuperCollider \
-    -a sonic-pi/etc \
-    -a sonic-pi/app/gui/qt/theme \
     /usr/local/bin/scsynth \
     /usr/bin/ruby \
     sonic-pi/app/gui/qt/build/sonic-pi \
     -o exodus-sonic-pi.tgz
 
-# extract the tarball and patch things up
-tar -xzf exodus-sonic-pi.tgz
+mkdir -p AppImage/bundles/bundle
 (
-    cd exodus/bundles
-    ln -s * bundle
+    cd AppImage/bundles/bundle
+
+    mkdir -p usr/lib
+    cp -r /usr/lib/ruby/ usr/lib/
+    mkdir -p usr/lib/x86_64-linux-gnu/ruby/
+    cp -r /usr/lib/x86_64-linux-gnu/ruby usr/lib/x86_64-linux-gnu
+    mkdir -p usr/local/share
+    cp -r /usr/local/share/SuperCollider/ usr/local/share/
+    mkdir -p var/build/sonic-pi
+    cp -r /var/build/sonic-pi/etc var/build/sonic-pi
+    mkdir -p var/build/sonic-pi/app/gui/qt
+    cp -r /var/build/sonic-pi/app/gui/qt/theme var/build/sonic-pi/app/gui/qt
+    mkdir -p var/build/sonic-pi/app/server
+    cp -r /var/build/sonic-pi/app/server/ruby var/build/sonic-pi/app/server
+
+    cd ../..
+    tar -zxf ../exodus-sonic-pi.tgz 
+    mv exodus/data .
+    cp -r exodus/bundles/*/* bundles/bundle
+
+    mkdir -p usr/bin
+    cd usr/bin
+    ln -s ../../bundles/bundle/usr/bin/ruby
+    ln -s ../../bundles/bundle/usr/local/bin/scsynth
+    ln -s ../../bundles/bundle/var/build/sonic-pi/app/gui/qt/build/sonic-pi
 )
+
 
 # Note: need to remove symlinks in the app/server/ruby directory for .rb files, otherwise
 # the require_relative breaks.
 # Here's maybe the easiest way to accomplish this task:
-find exodus/bundles/bundle/usr/lib/ruby/ -name '*.rb' -exec sed -i '' '{}' \;
-find exodus/bundles/bundle/var/build/sonic-pi/app/server/ruby -name '*.rb' -exec sed -i '' '{}' \;
+#find exodus/bundles/*/usr/lib/ruby/ -name '*.rb' -exec sed -i '' '{}' \;
+#find exodus/bundles/*/var/build/sonic-pi/app/server/ruby -name '*.rb' -exec sed -i '' '{}' \;
 
 
 # To Run:
 # PATH=/home/spencer/code/sonic-pi-appimage/exodus/bin:$PATH RUBYLIB=/home/spencer/code/sonic-pi-appimage/exodus/bundles/bundle/usr/lib/ruby/2.5.0/ ./sonic-pi
 
 
+exit
+
+PATH=$(pwd)/AppImage/usr/bin:$PATH \
+RUBYLIB=$(echo $(pwd)/AppImage/bundles/bundle{/usr/lib/ruby/vendor_ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.5.0,/usr/lib/ruby/vendor_ruby,/usr/lib/ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/2.5.0} | tr ' ' ':') sonic-pi
+
+
 # Note that it might be easier to just do a custom Ruby installation, although then again I'd
 # still need exodus to resolve all the linker stuff so whatever.
-
-
