@@ -85,6 +85,12 @@ chown qt /home/root/.sonic-pi
 
 
 #################################################################################
+# Build the launcher
+
+gcc launcher.c -o AppRun
+
+
+#################################################################################
 # Packaging
 
 # Remove broken symlinks in the ruby installation that trip up exodus.
@@ -114,6 +120,7 @@ exodus -t \
     /usr/local/bin/scsynth \
     /usr/bin/ruby \
     sonic-pi/app/gui/qt/build/sonic-pi \
+    AppRun \
     -o exodus-sonic-pi.tgz
 
 mkdir -p AppImage/bundles/bundle
@@ -137,6 +144,8 @@ mkdir -p AppImage/bundles/bundle
     tar -zxf ../exodus-sonic-pi.tgz 
     mv exodus/data .
     cp -r exodus/bundles/*/* bundles/bundle
+
+    ln -s bundles/bundle/var/build/AppRun
 
     mkdir -p usr/bin
     cd usr/bin
@@ -165,3 +174,13 @@ RUBYLIB=$(echo $(pwd)/AppImage/bundles/bundle{/usr/lib/ruby/vendor_ruby/2.5.0,/u
 
 # Note that it might be easier to just do a custom Ruby installation, although then again I'd
 # still need exodus to resolve all the linker stuff so whatever.
+
+
+# And finally, to create the AppImage:
+
+# curl -L https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage --output appimagetool-x86_64.AppImage
+# chmod a+x appimagetool-x86_64.AppImage 
+# cp sonic-pi.desktop AppImage
+# cp sonic-pi/app/gui/qt/images/icon.png AppImage/sonic-pi.png
+# sudo chown -R spencer AppImage
+# ARCH=x86_64 ./appimagetool-x86_64.AppImage AppImage sonic-pi.AppImage
