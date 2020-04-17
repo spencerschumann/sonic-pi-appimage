@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run with:
-# sudo docker run -u root -it -v $(pwd):/var/build darkmattercoder/qt-build:5.14.1 bash
+# docker run -u root -v $(pwd):/var/build darkmattercoder/qt-build:5.14.1 /var/build/build.sh
 
 cd /var/build
 
@@ -24,7 +24,8 @@ apt-get install -y --no-install-recommends \
     libboost-dev \
     libffi-dev \
     libaubio-dev \
-    erlang-base
+    erlang-base \
+    file
 
 #    libosmid-dev? But note that this is included in the Sonic Pi "external" directory.
 #ruby-ffi?
@@ -70,6 +71,12 @@ mkdir -p /home/root/.sonic-pi
 chown qt /home/root/.sonic-pi
 
 # TODO: decide where to put the sonic-pi source dir - do I really want it to be a subdir of this build project?
+(
+    git clone https://github.com/samaaron/sonic-pi.git
+    cd sonic-pi
+    git checkout v3.2.0
+)
+
 (
     cd sonic-pi/app/server/ruby/
     rake
@@ -154,33 +161,12 @@ mkdir -p AppImage/bundles/bundle
     ln -s ../../bundles/bundle/var/build/sonic-pi/app/gui/qt/build/sonic-pi
 )
 
-
-# Note: need to remove symlinks in the app/server/ruby directory for .rb files, otherwise
-# the require_relative breaks.
-# Here's maybe the easiest way to accomplish this task:
-#find exodus/bundles/*/usr/lib/ruby/ -name '*.rb' -exec sed -i '' '{}' \;
-#find exodus/bundles/*/var/build/sonic-pi/app/server/ruby -name '*.rb' -exec sed -i '' '{}' \;
-
-
-# To Run:
-# PATH=/home/spencer/code/sonic-pi-appimage/exodus/bin:$PATH RUBYLIB=/home/spencer/code/sonic-pi-appimage/exodus/bundles/bundle/usr/lib/ruby/2.5.0/ ./sonic-pi
-
-
-exit
-
-PATH=$(pwd)/AppImage/usr/bin:$PATH \
-RUBYLIB=$(echo $(pwd)/AppImage/bundles/bundle{/usr/lib/ruby/vendor_ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.5.0,/usr/lib/ruby/vendor_ruby,/usr/lib/ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/2.5.0} | tr ' ' ':') sonic-pi
-
-
 # Note that it might be easier to just do a custom Ruby installation, although then again I'd
 # still need exodus to resolve all the linker stuff so whatever.
 
-
 # And finally, to create the AppImage:
-
-# curl -L https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage --output appimagetool-x86_64.AppImage
-# chmod a+x appimagetool-x86_64.AppImage 
-# cp sonic-pi.desktop AppImage
-# cp sonic-pi/app/gui/qt/images/icon.png AppImage/sonic-pi.png
-# sudo chown -R spencer AppImage
-# ARCH=x86_64 ./appimagetool-x86_64.AppImage AppImage sonic-pi.AppImage
+curl -L https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage --output appimagetool-x86_64.AppImage
+chmod a+x appimagetool-x86_64.AppImage 
+cp sonic-pi.desktop AppImage
+cp sonic-pi/app/gui/qt/images/icon.png AppImage/sonic-pi.png
+ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppImage sonic-pi.AppImage

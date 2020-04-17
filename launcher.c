@@ -41,15 +41,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("Executable path: %s\n", exe_path);
-
     // Find the AppImage base directory
     // exe_path will be something like "/tmp/.mount_sonic-1erdOd/bundles/bundle/var/build/linker-2d196bc8632e500316fa0e0c3e8f40d0e7da853ae940805080b3492ce03b7b51"
     // The base directory needs to remove 5 slashes
     char *basedir = strdup(exe_path);
     for (int i = 0; i < 5; i++) {
         char *last_slash = strrchr(basedir, '/');
-        printf("Last slash: %s\n", last_slash);
         if (last_slash != NULL) {
             *last_slash = '\0';
         }
@@ -59,7 +56,6 @@ int main(int argc, char *argv[]) {
     char *path = NULL;
     asprintf(&path, "%s/usr/bin:%s", basedir, getenv("PATH"));
     setenv("PATH", path, 1);
-    printf("PATH=%s\n", path);
 
     // Set up RUBYLIB
     char *rubylib = NULL;
