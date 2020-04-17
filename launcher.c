@@ -11,6 +11,7 @@
     but as a self-contained executable:
 
     PATH=$(pwd)/AppImage/usr/bin:$PATH \
+    AUBIO_LIB=/usr/lib/x86_64-linux-gnu/libaudio.so \
     RUBYLIB=$(echo $(pwd)/AppImage/bundles/bundle{/usr/lib/ruby/vendor_ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.5.0,/usr/lib/ruby/vendor_ruby,/usr/lib/ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/2.5.0} | tr ' ' ':') \
     sonic-pi
 
@@ -41,15 +42,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("Executable path: %s\n", exe_path);
-
     // Find the AppImage base directory
     // exe_path will be something like "/tmp/.mount_sonic-1erdOd/bundles/bundle/var/build/linker-2d196bc8632e500316fa0e0c3e8f40d0e7da853ae940805080b3492ce03b7b51"
     // The base directory needs to remove 5 slashes
     char *basedir = strdup(exe_path);
     for (int i = 0; i < 5; i++) {
         char *last_slash = strrchr(basedir, '/');
-        printf("Last slash: %s\n", last_slash);
         if (last_slash != NULL) {
             *last_slash = '\0';
         }
@@ -59,19 +57,41 @@ int main(int argc, char *argv[]) {
     char *path = NULL;
     asprintf(&path, "%s/usr/bin:%s", basedir, getenv("PATH"));
     setenv("PATH", path, 1);
-    printf("PATH=%s\n", path);
 
+    // Set up aubio library path
+    char *aubio_lib = NULL;
+    asprintf(&aubio_lib,
+	     "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/libaudio.so",
+	     basedir
+    );
+    setenv("AUBIO_LIB", aubio_lib, 1);
+    
     // Set up RUBYLIB
+    // This list can be generated like this:
+    // $ /opt/ruby/bin/ruby -e 'puts $:' | sed -e 's,\(.*\),%s/bundles/bundle\1,'
+    // TODO: code generation to create this list...
     char *rubylib = NULL;
     asprintf(&rubylib,
-        "%s/bundles/bundle/usr/lib/ruby/vendor_ruby/2.5.0:"
-        "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.5.0:"
-        "%s/bundles/bundle/usr/lib/ruby/vendor_ruby:"
-        "%s/bundles/bundle/usr/lib/ruby/2.5.0:"
-        "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/ruby/2.5.0",
-        basedir, basedir, basedir, basedir, basedir
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0/x86_64-linux:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0/x86_64-linux:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0/x86_64-linux:",
+	     basedir, basedir, basedir, basedir,
+	     basedir, basedir, basedir, basedir
     );
     setenv("RUBYLIB", rubylib, 1);
+
+    // Set up SUPERCOLLIDER_PLUGIN_PATH
+    char *sc_path = NULL;
+    asprintf(&sc_path,
+        "%s/bundles/bundle/opt/supercollider/lib/SuperCollider/plugins/",
+        basedir
+	);
+    setenv("SUPERCOLLIDER_PLUGIN_PATH", sc_path, 1);
 
     // Exec sonic-pi
     execlp("sonic-pi", exe_path, NULL);

@@ -1,0 +1,10 @@
+--- a/opt/sonic-pi/app/server/ruby/lib/sonicpi/scsynthexternal.rb	2020-04-24 07:02:58.240065662 -0600
++++ b/opt/sonic-pi/app/server/ruby/lib/sonicpi/scsynthexternal.rb	2020-04-24 06:57:43.179665770 -0600
+@@ -449,6 +449,7 @@
+                     "-l", "1",
+                     "-i", "16",
+                     "-o", "16",
++                    "-U", ENV["SUPERCOLLIDER_PLUGIN_PATH"],
+                     "-b", num_buffers_for_current_os.to_s,
+                     "-B", "127.0.0.1")
+ 
