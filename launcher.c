@@ -11,6 +11,7 @@
     but as a self-contained executable:
 
     PATH=$(pwd)/AppImage/usr/bin:$PATH \
+    AUBIO_LIB=/usr/lib/x86_64-linux-gnu/libaudio.so \
     RUBYLIB=$(echo $(pwd)/AppImage/bundles/bundle{/usr/lib/ruby/vendor_ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.5.0,/usr/lib/ruby/vendor_ruby,/usr/lib/ruby/2.5.0,/usr/lib/x86_64-linux-gnu/ruby/2.5.0} | tr ' ' ':') \
     sonic-pi
 
@@ -57,15 +58,30 @@ int main(int argc, char *argv[]) {
     asprintf(&path, "%s/usr/bin:%s", basedir, getenv("PATH"));
     setenv("PATH", path, 1);
 
+    // Set up aubio library path
+    char *aubio_lib = NULL;
+    asprintf(&aubio_lib,
+	     "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/libaudio.so",
+	     basedir
+    );
+    setenv("AUBIO_LIB", aubio_lib, 1);
+    
     // Set up RUBYLIB
+    // This list can be generated like this:
+    // $ /opt/ruby/bin/ruby -e 'puts $:' | sed -e 's,\(.*\),%s/bundles/bundle\1,'
+    // TODO: code generation to create this list...
     char *rubylib = NULL;
     asprintf(&rubylib,
-        "%s/bundles/bundle/usr/lib/ruby/vendor_ruby/2.5.0:"
-        "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/ruby/vendor_ruby/2.5.0:"
-        "%s/bundles/bundle/usr/lib/ruby/vendor_ruby:"
-        "%s/bundles/bundle/usr/lib/ruby/2.5.0:"
-        "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/ruby/2.5.0",
-        basedir, basedir, basedir, basedir, basedir
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0/x86_64-linux:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0/x86_64-linux:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0:"
+	     "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0/x86_64-linux:",
+	     basedir, basedir, basedir, basedir,
+	     basedir, basedir, basedir, basedir
     );
     setenv("RUBYLIB", rubylib, 1);
 
