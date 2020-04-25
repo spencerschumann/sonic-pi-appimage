@@ -140,6 +140,7 @@ libraries=$(cat \
 
 # Run exodus
 echo "Running Exodus..."
+mkdir -p /var/staging
 echo "$libraries" |
 exodus -t \
     /opt/supercollider/bin/scsynth \
