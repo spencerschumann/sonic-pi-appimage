@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Run with:
-# docker run -u root -v $(pwd):/var/build darkmattercoder/qt-build:5.14.1 /var/build/build.sh
-
 cd /var/build
 
 # Install dependencies of Sonic Pi and Supercollider
@@ -37,12 +34,12 @@ apt-get install -y --no-install-recommends \
 
 #    libosmid-dev? But note that this is included in the Sonic Pi "external" directory.
 
-mkdir -p /opt/src
+mkdir -p /var/src
 
 
 # Install recent binary release of cmake - packaged version is a bit too old
 (
-    cd /opt
+    cd /var/src
     curl -L https://github.com/Kitware/CMake/releases/download/v3.17.1/cmake-3.17.1-Linux-x86_64.tar.gz -o cmake.tgz
     tar --strip-components=1 -xf cmake.tgz -C /usr
 )
@@ -62,7 +59,7 @@ export PATH=/opt/ruby/bin/:$PATH
 # Build Supercollider
 
 (
-    cd /opt/src
+    cd /var/src
     git clone https://github.com/supercollider/supercollider.git
     cd supercollider
     git checkout Version-3.11.0
@@ -80,7 +77,7 @@ export PATH=/opt/ruby/bin/:$PATH
 # Build Supercollider Plugins
 
 (
-    cd /opt/src
+    cd /var/src
     git clone --recursive https://github.com/supercollider/sc3-plugins.git
     git checkout Version-3.10.0
     cd sc3-plugins/
@@ -128,7 +125,7 @@ gcc launcher.c -o AppRun
 
 # Install Exodus via PIP (Note, maybe can skip pip and install exodus directly instead)
 (
-    cd /opt/src
+    cd /var/src
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     python3 get-pip.py
     pip3 install exodus-bundler
