@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd /var/build
-
 # Install dependencies of Sonic Pi and Supercollider
 apt-get update
 apt-get install -y --no-install-recommends \
@@ -117,7 +115,7 @@ export AUBIO_LIB=/usr/lib/x86_64-linux-gnu/libaudio.so
 #################################################################################
 # Build the launcher
 
-gcc launcher.c -o AppRun
+gcc /var/build/launcher.c -o /usr/bin/AppRun
 
 
 #################################################################################
@@ -147,17 +145,17 @@ exodus -t \
     /opt/supercollider/bin/scsynth \
     /opt/ruby/bin/ruby \
     /opt/sonic-pi/app/gui/qt/build/sonic-pi \
-    AppRun \
-    -o exodus-sonic-pi.tgz
+    /usr/bin/AppRun \
+    -o /var/staging/exodus-sonic-pi.tgz
 
 # Other binaries used:
 # /bin/grep, /bin/ps, /bin/sed, jack_connect
 
 # TODO: still need to add Erlang
 
-mkdir -p AppImage/bundles/bundle
+mkdir -p /var/staging/AppImage/bundles/bundle
 (
-    cd AppImage/bundles/bundle
+    cd /var/staging/AppImage/bundles/bundle
 
     mkdir -p opt/
     cp -r /opt/ruby/ opt/
@@ -176,7 +174,7 @@ mkdir -p AppImage/bundles/bundle
     mv exodus/data .
     cp -r exodus/bundles/*/* bundles/bundle
 
-    ln -s bundles/bundle/var/build/AppRun
+    ln -s bundles/bundle/usr/bin/AppRun
 
     mkdir -p usr/bin
     cd usr/bin
@@ -186,8 +184,10 @@ mkdir -p AppImage/bundles/bundle
 )
 
 # And finally, to create the AppImage:
-curl -L https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage --output appimagetool-x86_64.AppImage
-chmod a+x appimagetool-x86_64.AppImage
-cp /var/build/sonic-pi.desktop AppImage
-cp /opt/sonic-pi/app/gui/qt/images/icon.png AppImage/sonic-pi.png
-ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppImage sonic-pi.AppImage
+curl -L https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage --output /var/staging/appimagetool-x86_64.AppImage
+chmod a+x /var/staging/appimagetool-x86_64.AppImage
+cp /var/build/sonic-pi.desktop /var/staging/AppImage
+cp /opt/sonic-pi/app/gui/qt/images/icon.png /var/staging/AppImage/sonic-pi.png
+ARCH=x86_64 /var/staging/appimagetool-x86_64.AppImage --appimage-extract-and-run /var/staging/AppImage /var/build/sonic-pi.AppImage
+
+chown 1000 /var/build/sonic-pi.AppImage
