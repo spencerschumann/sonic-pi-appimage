@@ -61,10 +61,18 @@ int main(int argc, char *argv[]) {
     // Set up aubio library path
     char *aubio_lib = NULL;
     asprintf(&aubio_lib,
-	     "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/libaudio.so",
-	     basedir
+        "%s/bundles/bundle/usr/lib/x86_64-linux-gnu/libaubio.so.5",
+        basedir
     );
     setenv("AUBIO_LIB", aubio_lib, 1);
+
+    // Set up Erlang root path
+    char *erlang = NULL;
+    asprintf(&erlang,
+        "%s/bundles/bundle/usr/lib/erlang",
+        basedir
+    );
+    setenv("ERLANG_ROOTDIR", erlang, 1);
     
     // Set up RUBYLIB
     // This list can be generated like this:
@@ -72,16 +80,16 @@ int main(int argc, char *argv[]) {
     // TODO: code generation to create this list...
     char *rubylib = NULL;
     asprintf(&rubylib,
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0/x86_64-linux:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0/x86_64-linux:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0:"
-	     "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0/x86_64-linux:",
-	     basedir, basedir, basedir, basedir,
-	     basedir, basedir, basedir, basedir
+        "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby/2.7.0/x86_64-linux:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/site_ruby:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby/2.7.0/x86_64-linux:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/vendor_ruby:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0:"
+        "%s/bundles/bundle/opt/ruby/lib/ruby/2.7.0/x86_64-linux:",
+        basedir, basedir, basedir, basedir,
+        basedir, basedir, basedir, basedir
     );
     setenv("RUBYLIB", rubylib, 1);
 

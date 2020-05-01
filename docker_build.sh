@@ -5,6 +5,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
     musl-tools \
     \
+    libaubio5 \
     libaudio-dev \
     libjack-jackd2-dev \
     libsndfile1-dev \
@@ -17,6 +18,8 @@ apt-get install -y --no-install-recommends \
     libboost-dev \
     \
     erlang-base \
+    libsctp1 \
+    \
     file \
     \
     autoconf \
@@ -97,7 +100,7 @@ export PATH=/opt/ruby/bin/:$PATH
     git checkout v3.2.2
 )
 
-export AUBIO_LIB=/usr/lib/x86_64-linux-gnu/libaudio.so
+export AUBIO_LIB=/usr/lib/x86_64-linux-gnu/libaubio.so.5
 (
     cd /opt/sonic-pi/app/server/ruby/
     rake
@@ -132,7 +135,8 @@ gcc /var/build/launcher.c -o /usr/bin/AppRun
 libraries=$(cat \
     <(echo /usr/local/plugins/platforms/libqxcb.so) \
     <(echo /usr/local/plugins/xcbglintegrations/libqxcb-glx-integration.so) \
-    <(echo /usr/lib/x86_64-linux-gnu/libaudio.so) \
+    <(echo /usr/lib/x86_64-linux-gnu/libaubio.so.5) \
+    <(echo /usr/lib/x86_64-linux-gnu/libsctp.so.1) \
     <(find /opt/sonic-pi/app/server/ruby -name '*.so') \
     <(find /opt/ruby -name '*.so') \
     <(find /opt/supercollider -name '*.so')
@@ -145,9 +149,16 @@ echo "$libraries" |
 exodus -t \
     /opt/supercollider/bin/scsynth \
     /opt/ruby/bin/ruby \
+    /usr/lib/erlang/erts-9.2/bin/erlexec \
+    /usr/lib/erlang/erts-9.2/bin/beam.smp \
+    /usr/lib/erlang/erts-9.2/bin/erl_child_setup \
+    /usr/lib/erlang/bin/start.boot \
     /opt/sonic-pi/app/gui/qt/build/sonic-pi \
+    /opt/sonic-pi/app/server/native/osmid/m2o \
+    /opt/sonic-pi/app/server/native/osmid/o2m \
     /usr/bin/AppRun \
     -o /var/staging/exodus-sonic-pi.tgz
+
 
 # Other binaries used:
 # /bin/grep, /bin/ps, /bin/sed, jack_connect
@@ -160,29 +171,51 @@ mkdir -p /var/staging/AppImage/bundles/bundle
 
     mkdir -p opt/
     cp -r /opt/ruby/ opt/
+
+    mkdir -p usr/lib/
+    cp -r /usr/lib/erlang usr/lib
+
     mkdir -p opt/supercollider/share
     cp -r /opt/supercollider/share opt/supercollider
+
     mkdir -p opt/sonic-pi
     cp -r /opt/sonic-pi/etc opt/sonic-pi
+
     mkdir -p opt/sonic-pi/app/gui/qt
     cp -r /opt/sonic-pi/app/gui/qt/theme opt/sonic-pi/app/gui/qt
+
     mkdir -p opt/sonic-pi/app/server
     cp -r /opt/sonic-pi/app/server/ruby opt/sonic-pi/app/server
     patch -p1 < /var/build/scsynth_launch.diff
+
+    cp -r /opt/sonic-pi/app/server/erlang opt/sonic-pi/app/server
 
     cd ../..
     tar -zxf ../exodus-sonic-pi.tgz 
     mv exodus/data .
     cp -r exodus/bundles/*/* bundles/bundle
 
-    ln -s bundles/bundle/usr/bin/AppRun
+    ln -s bundles/bundle/usr/bin/AppRun .
 
+    # Symlinks to executables for convenience
     mkdir -p usr/bin
     cd usr/bin
-    ln -s ../../bundles/bundle/opt/ruby/bin/ruby
-    ln -s ../../bundles/bundle/opt/supercollider/bin/scsynth
-    ln -s ../../bundles/bundle/opt/sonic-pi/app/gui/qt/build/sonic-pi
+    ln -s ../../bundles/bundle/opt/ruby/bin/ruby .
+    ln -s ../../bundles/bundle/usr/lib/erlang/bin/erl .
+    ln -s ../../bundles/bundle/opt/supercollider/bin/scsynth .
+    ln -s ../../bundles/bundle/opt/sonic-pi/app/gui/qt/build/sonic-pi .
+    ln -s ../../bundles/bundle//opt/sonic-pi/app/server/native/osmid/m2o .
+    ln -s ../../bundles/bundle//opt/sonic-pi/app/server/native/osmid/o2m .
+
+    # Prepare erlang scripts for relocation
+    cd ../../bundles/bundle
+    sed -ie 's,/usr/lib/erlang,\$ERLANG_ROOTDIR,' usr/lib/erlang/bin/erl
+    sed -ie 's,/usr/lib/erlang,\$ERLANG_ROOTDIR,' usr/lib/erlang/bin/start
+    sed -ie 's,/usr/lib/erlang,\$ERLANG_ROOTDIR,' usr/lib/erlang/erts-9.2/bin/erl
+    sed -ie 's,/usr/lib/erlang,\$ERLANG_ROOTDIR,' usr/lib/erlang/erts-9.2/bin/start
+    sed -ie 's,/usr/lib/erlang,\$ERLANG_ROOTDIR,' usr/lib/erlang/releases/RELEASES
 )
+
 
 # And finally, to create the AppImage:
 curl -L https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage --output /var/staging/appimagetool-x86_64.AppImage
